@@ -1,0 +1,619 @@
+<html>
+<head>
+	<title>Web Assignment Game</title>
+	<link id="pagestyle" rel="stylesheet" type="text/css" href="Game01.css">
+</head>
+<body>
+
+<div id="div1"></div>
+<div id="div2"></div>
+<div id="background"></div>
+<div id="planet1"></div>
+<div id="planet2"></div>
+<div id="header"></div>
+<div id="score"></div>
+<div id="level"></div>
+<div id="health"></div>
+<div id="hero"></div>
+<div id="laser"></div>
+<div id="gameover">GAME OVER</div>
+<div id="nextlevel">GOOD JOB</div>
+<div id="helpscreen"></div>
+<div id="showscore"></div>
+
+<button onclick="start();" id="bplay"></button>
+<button onclick="help();" id="bhelp"></button>
+<button onclick="location.reload();" id="bmmenu"></button>
+<button onclick="changeHelpScreen();" id="bnext"></button>
+<button onclick="changeBackHelpScreen();" id="bback"></button>
+<script>
+	var LEFT_KEY = 37;
+	var UP_KEY = 38;
+	var RIGHT_KEY = 39;
+	var DOWN_KEY = 40;
+	var SPACE_KEY = 71;
+	var HERO_SPEED = 10;
+
+	var lastLoopRun = 0;
+	var score = 0;
+	var timecount = 1;
+	var health = 3;
+	var bonus=0;
+  	var shoot=0;
+  	var shootenemy=0;
+	var end=false;
+  	var level=1;
+
+	var controller = new Object();
+	var enemies = new Array();
+ 	var enemies2 = new Array();
+  	var astro = new Array();
+
+  	var elementplay = document.getElementById('bplay');
+  	var elementhelp = document.getElementById('bhelp');
+  	var elementmenu = document.getElementById('bmmenu');
+  	var elementnext = document.getElementById('bnext');
+  	var elementback = document.getElementById('bback');
+
+
+  	var element =document.getElementById('helpscreen')
+  	element.style.visibility = 'hidden';
+  	elementmenu.style.visibility = 'hidden';
+  	elementnext.style.visibility = 'hidden';
+  	elementback.style.visibility = 'hidden';
+
+
+	function start()
+  	{
+    	loop();
+    	document.getElementById('pagestyle').setAttribute('href', 'Game02.css');
+    	elementplay.style.visibility = 'hidden';
+    	elementhelp.style.visibility = 'hidden';
+    	elementmenu.style.visibility = 'visible';
+    	elementmenu.style.left="700px";
+    	elementmenu.style.top="100px";
+    	var element =document.getElementById('helpscreen')
+    	element.style.visibility = 'hidden';
+    	elementnext.style.visibility = 'hidden';
+  	}
+  
+  	function help()
+  	{
+    	elementplay.style.left="475px";
+    	elementplay.style.top="425px";
+    	elementmenu.style.left="475px";
+    	elementmenu.style.top="525px";
+    	elementhelp.style.visibility = 'hidden';
+    	var element =document.getElementById('helpscreen')
+    	element.style.visibility = 'visible';
+    	elementmenu.style.visibility = 'visible';
+    	elementnext.style.visibility = 'visible';
+  	}
+  	function changeHelpScreen()
+  	{
+    	document.getElementById("helpscreen").style.background = "url('Intro02.jpg')";
+    	elementnext.style.visibility = 'hidden';
+    	elementback.style.visibility = 'visible';
+  	}
+  	function changeBackHelpScreen()
+  	{
+    	document.getElementById("helpscreen").style.background = "url('Intro01.jpg')";
+    	elementback.style.visibility = 'hidden';
+    	elementnext.style.visibility = 'visible';
+  	}
+  
+  	function createSprite(element, x, y, w, h) 
+	{
+		var result = new Object();
+  		result.element = element;
+  		result.x = x;
+  		result.y = y;
+  		result.w = w;
+  		result.h = h;
+  		return result;
+	}
+
+	function toggleKey(keyCode, isPressed) 
+	{
+		if (keyCode == LEFT_KEY) 
+		{
+			controller.left = isPressed;
+  	}
+  	if (keyCode == RIGHT_KEY) 
+  	{
+  			controller.right = isPressed;
+  	}
+  	if (keyCode == UP_KEY) 
+  	{
+    		controller.up = isPressed;
+  	}
+  	if (keyCode == DOWN_KEY) 
+  	{
+  			controller.down = isPressed;
+  	}
+  	if (keyCode == SPACE_KEY) 
+  	{
+  			controller.space = isPressed;
+  	}
+    if(keyCode == SHIFT_KEY)
+    {
+      controller.shift = isPressed;
+    }   
+	}
+
+	function intersects(a, b)
+	{
+  		return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y -10 + b.h && a.y + a.h > b.y;
+	}
+
+	function checkBound(sprite, ignoreY) 
+	{
+  		if (sprite.x < -50) 
+  		{
+    		sprite.x = -50;
+  		}
+  		if (!ignoreY && sprite.y < 100) 
+  		{
+    		sprite.y = 100;
+  		}
+  		if (sprite.x + sprite.w > 550) 
+  		{
+    	sprite.x = 550 - sprite.w;
+  		}
+  		if (!ignoreY && sprite.y + sprite.h > 580) 
+  		{
+    		sprite.y = 580 - sprite.h;
+  		}
+	}
+
+	function setPosition(sprite) 
+	{
+  		var e = document.getElementById(sprite.element);
+  		e.style.left = sprite.x + 300;
+  		e.style.top = sprite.y + 'px';
+	}
+  	function setPosition2(sprite) 
+  	{
+      	var f = document.getElementById(sprite.element);
+      	f.style.left = sprite.x;
+      	f.style.top = sprite.y;
+  	}
+  	function setPosition3(sprite) 
+  	{
+      	var f = document.getElementById(sprite.element);
+      	f.style.left = sprite.x;
+      	f.style.top = sprite.y;
+  	}
+
+	function handleControls() 
+	{
+  		if (controller.up) 
+  		{
+    		hero.y -= HERO_SPEED;
+  		}
+  		if (controller.down) 
+  		{
+    		hero.y += HERO_SPEED;
+  		}
+  		if (controller.left) 
+  		{
+    		hero.x -= HERO_SPEED;
+  		}
+  		if (controller.right) 
+  		{
+    		hero.x += HERO_SPEED;
+  		}	
+  		if (controller.space && laser.y <= 100) 
+  		{
+    		laser.x = hero.x + 47;
+    		laser.y = hero.y - laser.h;
+        var myMusic = new sound("laserm1.wav");
+        myMusic.play();
+  		}
+  		checkBound(hero);
+	}
+
+  	function checkHit()
+	{
+  		for (var i = 0; i < enemies.length; i++) 
+  		{
+    		if (intersects(laser, enemies[i])) 
+    		{
+      		var myMusic = new sound("hit1.wav");
+            myMusic.play();
+            if(health<3)
+      		{
+      			bonus += 2;
+      			if(bonus>=10)
+      			{
+      				health += 1;
+      				bonus=0;
+      			}
+      		}
+      		var element = document.getElementById(enemies[i].element);
+      		element.style.visibility = 'hidden';
+      		element.parentNode.removeChild(element);
+      		enemies.splice(i, 1);
+      		i--;
+      		laser.y = - 100;
+      		score += 100;
+    		} 
+    		else if (intersects(hero, enemies[i])) 
+    		{
+    			if(health >0)
+      			{
+      				health -= 1;
+      				var element = document.getElementById(enemies[i].element);
+      				element.style.visibility = 'hidden';
+      				element.parentNode.removeChild(element);
+      				enemies.splice(i, 1);
+      				i--;
+      			bonus=0;
+      		   	}
+      			
+      			if (health<=0) 
+      			{
+      				gameOver();
+      			}
+      			
+    		}
+         
+    		else if (enemies[i].y + enemies[i].h >= 600) 
+    		{
+      			var element = document.getElementById(enemies[i].element);
+      			element.style.visibility = 'hidden';
+      			element.parentNode.removeChild(element);
+      			enemies.splice(i, 1);
+      			i--;
+            	if(score>0)
+            	{
+              		score-=50;
+            	}
+    		}
+  		}
+      	for (var i = 0; i < enemies2.length; i++) 
+      	{
+        	if (intersects(laser, enemies2[i])) 
+        	{
+            	shootenemy++;
+            	laser.y = - 100;
+            	if (shootenemy == 2)
+            	{
+              		if(health<3)
+              		{
+                		bonus += 1;
+                		if(bonus>=10)
+                		{
+                  		health += 1;
+                  		bonus=0;
+                		}
+              		}
+              var myMusic = new sound("hit1.wav");
+              myMusic.play();
+              var element = document.getElementById(enemies2[i].element);
+              element.style.visibility = 'hidden';
+              element.parentNode.removeChild(element);
+              enemies2.splice(i, 1);
+              i--;
+              score += 150;
+              shootenemy=0;
+            }
+            if(health<3)
+            {
+              bonus += 1;
+              if(bonus==5)
+              {
+                health += 1;
+                bonus=0;
+              }
+            }
+        } 
+        else if (intersects(hero, enemies2[i])) 
+        {
+          if(health >0)
+            {health -= 2;
+            var element = document.getElementById(enemies2[i].element);
+            element.style.visibility = 'hidden';
+            element.parentNode.removeChild(element);
+            enemies2.splice(i, 1);
+            i--;
+            bonus=0;
+             }
+            
+            if (health<=0) 
+            {
+            
+              gameOver();
+            }
+            
+        }
+         
+        else if (enemies2[i].y + enemies2[i].h >= 600) 
+        {
+            var element = document.getElementById(enemies2[i].element);
+            element.style.visibility = 'hidden';
+            element.parentNode.removeChild(element);
+            enemies2.splice(i, 1);
+            i--;
+            shootenemy=0;
+            if(score>0)
+            {
+              score-=50;
+            }
+        }
+      	}
+      	for (var i = 0; i < astro.length; i++)
+      	{
+        if(intersects(hero, astro[i]))
+        {
+          gameOver();
+          health = 0;
+          laser.y = -100;
+        }
+        else if (intersects(laser, astro[i])) 
+        {
+            shoot++;
+            laser.y = -100;
+            if(shoot == 3)
+            {
+              var myMusic = new sound("Astro01.wav");
+              myMusic.play();
+              var element = document.getElementById(astro[i].element);
+              element.style.visibility = 'hidden';
+              element.parentNode.removeChild(element);
+              astro.splice(i, 1);
+              i--;
+              score +=500;
+              shoot = 0;
+            }
+        }
+        else if (astro[i].y + astro[i].h >= 600) 
+        {
+            var element = document.getElementById(astro[i].element);
+            element.style.visibility = 'hidden';
+            element.parentNode.removeChild(element);
+            astro.splice(i, 1);
+            i--;
+            shoot = 0;
+        }
+      	}
+	}
+
+	function gameOver() 
+	{
+  		laser.y = - 100;
+      	end=true;
+      	var myMusic = new sound("Gameover01.wav");
+      	myMusic.play();
+      	for(var i=0;i<enemies.length;i++)
+      	{
+        	var element = document.getElementById(enemies[i].element);
+        	element.style.visibility = 'hidden';
+      	}
+      	for(var i=0;i<enemies2.length;i++)
+      	{
+        	var element = document.getElementById(enemies2[i].element);
+        	element.style.visibility = 'hidden';
+      	}
+      	for(var i=0;i<astro.length;i++)
+      	{
+        	var element = document.getElementById(astro[i].element);
+        	element.style.visibility = 'hidden';
+      	}
+  		var element = document.getElementById(hero.element);
+  		element.style.visibility = 'hidden';
+  		element = document.getElementById('gameover');
+  		element.style.visibility = 'visible';
+      	var showscoreElement = document.getElementById('showscore');
+      	showscoreElement.innerHTML = 'Your Score Is : ' + score;
+	}
+  
+  	function levelup()
+  	{
+    	addEnemy();
+    	if (score >=500)
+    	{
+      	document.getElementById("hero").style.background = "url('Hero02.png')";
+      	document.getElementById("laser").style.background = "url('Laser04.png')";
+      	level = 2;
+      	addEnemy2();
+   	 	}
+    	if (score >= 1500)
+    	{
+      		document.getElementById("hero").style.background = "url('Hero03.png')";
+      		document.getElementById("laser").style.background = "url('Laser03.png')";
+      		level = 3;
+      		addAstro();
+    	}
+  	}
+
+	function showSprites()
+	{
+  		setPosition(hero);
+  		setPosition(laser);
+      	setPosition2(planet1);
+      	setPosition2(planet2);
+  		for (var i = 0; i < enemies.length; i++) 
+  		{
+    		setPosition(enemies[i]);
+  		}
+      	for (var i = 0; i < enemies2.length; i++) 
+      	{
+        	setPosition(enemies2[i]);
+      	}
+      	for (var i = 0; i < astro.length; i++) 
+      	{
+        	setPosition(astro[i]);
+      	}
+  		var scoreElement = document.getElementById('score');
+  		scoreElement.innerHTML = 'SCORE : ' + score;
+  		var healthElement = document.getElementById('health');
+  		healthElement.innerHTML = 'HEALTH : ' + health;
+      	var levelElement = document.getElementById('level');
+      	levelElement.innerHTML = 'LEVEL : ' + level;
+	}
+
+	function updatePositions() 
+	{
+  		for (var i = 0; i < enemies.length; i++) 
+  		{
+    		enemies[i].y += 4;
+    		enemies[i].x += getRandom(7) - 3;
+    		checkBound(enemies[i], true);
+  		}
+      	for (var i = 0; i < enemies2.length; i++) 
+      	{
+        	enemies2[i].y += 4;
+        	enemies2[i].x += getRandom(7) - 3;
+        	checkBound(enemies2[i], true);
+      	}
+      	for (var i = 0; i < astro.length; i++) 
+      	{
+        	astro[i].y += 2;
+        	astro[i].x += getRandom(7) - 3;
+        	checkBound(astro[i], true);
+      	}
+      	planet1.x += (getRandom(3) - 4)/30;
+      	planet1.y += 2/5;
+      	planet2.x += (getRandom(3) - 4)/30;
+      	planet2.y += 2/5;
+  		laser.y -= 20;
+	}
+  	function checkPlanet()
+  	{
+    	if(planet1.y + planet1.h >= 600)
+    	{
+      		planet1.y = -500;
+      		planet1.x = 550;
+      		document.getElementById("planet1").style.background = "url('Planet03.png')";
+    	}
+    	if(planet2.y + planet2.h >= 600)
+    	{
+      		planet2.y = -500;
+      		planet2.x = 400;
+      		document.getElementById("planet2").style.background = "url('Planet04.png')";
+    	}
+    	if(planet1.x < 250)
+    	{
+      		planet1.x=250;
+    	}
+    		if(planet2.x < 250)
+    	{
+      		planet2.x=250;
+    	}
+    
+  	}
+
+	function addEnemy() 
+	{
+  		if (timecount%50 == 0) 
+    	{
+      		var elementName = 'enemy' + getRandom(10000000);
+      		var enemy = createSprite(elementName, getRandom(500), 100, 50, 50);
+    
+      		var element = document.createElement('div');
+      		element.id = enemy.element;
+      		element.className = 'enemy'; 
+      		document.children[0].appendChild(element);
+    
+      		enemies[enemies.length] = enemy;
+    	}
+	}
+  	function addEnemy2() 
+  	{
+      
+    	if (timecount%120 == 0) 
+    	{
+      		var elementName = 'enemy2' + getRandom(10000000);
+      		var enemy2 = createSprite(elementName, getRandom(500), 100, 50, 50);
+    
+      		var element = document.createElement('div');
+      		element.id = enemy2.element;
+      		element.className = 'enemy2'; 
+      		document.children[0].appendChild(element);
+    
+      		enemies2[enemies2.length] = enemy2;
+    	}
+  	}
+  	function addAstro() 
+  	{
+    	if (timecount%250 == 0) 
+    	{
+      		var elementName = 'astr' + getRandom(10000000);
+      		var astr = createSprite(elementName, getRandom(500), 100, 100, 100);
+    
+      		var element = document.createElement('div');
+      		element.id = astr.element;
+      		element.className = 'astr'; 
+      		document.children[0].appendChild(element);
+    
+      		astro[astro.length] = astr;
+    	}
+  	}
+
+	function getRandom(maxSize) 
+	{
+  		return parseInt(Math.random() * maxSize);
+	}
+  	function sound(src) 
+  	{
+    	this.sound = document.createElement("audio");
+    	this.sound.src = src;
+    	this.sound.setAttribute("preload", "auto");
+    	this.sound.setAttribute("controls", "none");
+    	this.sound.style.display = "none";
+    	document.body.appendChild(this.sound);
+    	this.play = function()
+    	{
+        this.sound.play();
+    	}
+    	this.stop = function()
+    	{
+        	this.sound.pause();
+    	}    
+  	}
+
+	function loop() 
+	{
+  		if(end==false)
+  		{
+  			if (new Date().getTime() - lastLoopRun > 40)
+  			{
+    			updatePositions();
+    			handleControls();
+    			checkHit();
+    
+    			levelup();
+
+    			showSprites();
+          checkPlanet();
+
+          lastLoopRun = new Date().getTime();
+          timecount += 1;
+  			}
+  			setTO = setTimeout('loop();', 2);
+  		}
+      if(laser.y < 110)
+      {
+        laser.y = -laser.h;
+      }
+	}
+  
+	document.onkeydown = function(evt) 
+	{
+  		toggleKey(evt.keyCode, true);
+	};
+
+	document.onkeyup = function(evt) 
+	{
+  		toggleKey(evt.keyCode, false);
+	};
+
+	var hero = createSprite('hero', 200, 500, 100, 100);
+	var laser = createSprite('laser', 0, -120, 5, 20);
+  	var planet1 = createSprite('planet1', 450, -100, 120, 120);
+  	var planet2 = createSprite('planet2', 700, -500, 80, 80);
+
+</script>
+</body>
+</html>
